@@ -5,6 +5,7 @@ import {
   deleteProject,
   getProjectDetail,
   updateProject,
+  publishProject,
 } from "../controllers/projectController.js";
 import { uploadMultiple } from "../middleware/uploadImageMiddleware.js";
 import { apiKeyAuth } from "../middleware/apikeyMiddleware.js";
@@ -16,5 +17,6 @@ router.get("/", apiKeyAuth, getProjects);
 router.delete("/:id", apiKeyAuth, deleteProject);
 router.get("/:id", apiKeyAuth, getProjectDetail);
 router.put("/:id", apiKeyAuth, uploadMultiple, updateProject);
+router.put("/publish/:id", apiKeyAuth, publishProject);
 
 export default router;

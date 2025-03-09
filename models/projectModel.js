@@ -9,10 +9,20 @@ const projectSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  images: {
-    type: [String],
+  cover: {
+    type: String,
     required: true,
   },
+  images: [{
+    index: {
+      type: String,
+      required: true,
+    },
+    url: {
+      type: String,
+      required: true,
+    },
+  }],
   technologies: {
     type: [String],
     required: true,
@@ -28,6 +38,11 @@ const projectSchema = new mongoose.Schema({
   content: {
     type: String,
     required: true,
+  },
+  published: {
+    type: Boolean,
+    required: true,
+    default: false
   },
   apiKey: {
     type: String,

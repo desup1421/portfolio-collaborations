@@ -21,8 +21,8 @@ export const createProject = async (req, res) => {
     errors.push({ path: "technologies", message });
   }
 
-  if (!images) {
-    const message = "Images is required";
+  if (!project.cover) {
+    const message = "Cover is required";
     errors.push({ path: "images", message });
   }
 
@@ -51,7 +51,7 @@ export const createProject = async (req, res) => {
     const uploadResults = await Promise.all(
       images.map((file, index) => {
         return new Promise((resolve, reject) => {
-          const publicId = `${project.slug}-${index}`;
+          const publicId = `${newProject._id}-${index}`;
           const uploadStream = cloudinary.uploader.upload_stream(
             {
               folder: "projects",
@@ -63,7 +63,7 @@ export const createProject = async (req, res) => {
                 console.error("Cloudinary upload error:", error);
                 return reject(error);
               }
-              resolve(result.secure_url);
+              resolve({index, url:result.secure_url});
             }
           );
 
@@ -112,7 +112,8 @@ export const getProjects = async (req, res) => {
       description: project.description,
       tags: project.technologies,
       slug: project.slug,
-      thumb: project.images[0],
+      published: project.published,
+      thumb: project.images[project.cover].url,
     }));
     res.status(200).json({
       success: true,
@@ -183,16 +184,16 @@ export const updateProject = async (req, res) => {
   const apiKey = req.apiKey;
 
   try {
-    const existingSkill = await Project.findOne({ _id: id, apiKey });
-    if (!existingSkill) {
+    const existingProject = await Project.findOne({ _id: id, apiKey });
+    if (!existingProject) {
       return res.status(404).json({ message: "Project not found" });
     }
-
+    
     if (images.length > 0) {
       const uploadResults = await Promise.all(
         images.map((file, index) => {
           return new Promise((resolve, reject) => {
-            const publicId = `${project.slug}-${index}`;
+            const publicId = `${id}-${index}`;
             const uploadStream = cloudinary.uploader.upload_stream(
               {
                 folder: "projects",
@@ -216,16 +217,35 @@ export const updateProject = async (req, res) => {
       project.images = uploadResults;
     }
 
-    const technologies = project.technologies
-      .trim()
-      .split(",")
-      .map((tech) => tech.trim());
+    const technologies = Array.isArray(project.technologies)
+      ? project.technologies
+      : project.technologies
+          .trim()
+          .split(",")
+          .map((tech) => tech.trim());
 
     project.technologies = technologies;
+    project.images = JSON.parse(project.images);
     const updatedProject = await Project.findByIdAndUpdate(id, project, {
       new: true, // Return the updated document
     }).select("-apiKey");
     res.status(200).json({ success: true, data: updatedProject });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "internal server error" });
+    console.log(`Error: ${error.message}`);
+  }
+};
+
+export const publishProject = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const project = await Project.findById(id);
+    project.published = !project.published;
+    await project.save();
+    res.status(200).json({
+      success: true,
+      message: `Project ${project.published ? "published" : "unpublished"}`,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: "internal server error" });
     console.log(`Error: ${error.message}`);

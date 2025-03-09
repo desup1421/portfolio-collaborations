@@ -77,7 +77,7 @@ export const updateHero = async (req, res) => {
     if (image) {
       hero.image = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: "hero", public_id: id, overwrite: true },
+          { folder: "hero", public_id: apiKey, overwrite: true },
           (error, result) => {
             if (error) {
               console.error(`Error: ${error.message}`);
